@@ -2,6 +2,7 @@ package com.tracking.fleet.shared.api.exception;
 
 import com.tracking.fleet.shared.api.response.ApiErrorResponse;
 import com.tracking.fleet.vehicle.application.exception.VehicleAlreadyExistsException;
+import com.tracking.fleet.vehicle.application.exception.VehicleLocationNotFoundException;
 import com.tracking.fleet.vehicle.application.exception.VehicleNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.LinkedHashMap;
@@ -33,13 +34,13 @@ public class GlobalExceptionHandler {
   public GlobalExceptionHandler() {}
 
   /**
-   * Handles missing vehicles.
+   * Handles missing vehicles and locations.
    *
    * @param exception missing vehicle exception
    * @return HTTP 404 response
    */
-  @ExceptionHandler(VehicleNotFoundException.class)
-  public ResponseEntity<ApiErrorResponse> handleNotFound(VehicleNotFoundException exception) {
+  @ExceptionHandler({VehicleNotFoundException.class, VehicleLocationNotFoundException.class})
+  public ResponseEntity<ApiErrorResponse> handleNotFound(RuntimeException exception) {
     return ResponseEntity.status(HttpStatus.NOT_FOUND)
         .body(ApiErrorResponse.of(exception.getMessage()));
   }

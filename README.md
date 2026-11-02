@@ -1,5 +1,28 @@
 # Tracking Fleet: Real-Time Vehicle Tracking API
 
+## API
+
+### Vehicles
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/v1/vehicles` | Create a vehicle |
+| `GET` | `/api/v1/vehicles` | List vehicles (paged) |
+| `GET` | `/api/v1/vehicles/{id}` | Get a vehicle |
+| `PUT` | `/api/v1/vehicles/{id}` | Update a vehicle |
+| `PATCH` | `/api/v1/vehicles/{id}/status` | Change vehicle status |
+| `PATCH` | `/api/v1/vehicles/{id}/mileage` | Update vehicle mileage |
+| `DELETE` | `/api/v1/vehicles/{id}` | Delete a vehicle and its location history |
+
+### Locations
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/v1/vehicles/{id}/locations` | Record a location |
+| `GET` | `/api/v1/vehicles/{id}/locations/latest` | Get the latest location |
+| `GET` | `/api/v1/vehicles/{id}/locations` | Get location history (paged, optional `from`/`to`) |
+| `GET` | `/api/v1/vehicles/live` | Get the latest location of every vehicle |
+
 ## Configuration
 
 Database credentials are **not** stored in the repository. The application reads them from
