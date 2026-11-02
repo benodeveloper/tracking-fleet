@@ -13,6 +13,10 @@ import com.tracking.fleet.vehicle.application.command.CreateVehicleCommand;
 import com.tracking.fleet.vehicle.application.command.UpdateVehicleCommand;
 import com.tracking.fleet.vehicle.domain.VehicleId;
 import com.tracking.fleet.vehicle.domain.model.Vehicle;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -35,6 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RequestMapping("/api/v1/vehicles")
 @RestController
+@Tag(name = "Vehicles", description = "Create and manage fleet vehicles")
 public class VehicleController {
 
   private final VehicleService vehicleService;
@@ -55,6 +60,16 @@ public class VehicleController {
    * @return the created vehicle with HTTP 201
    */
   @PostMapping
+  @Operation(
+      summary = "Create a vehicle",
+      description =
+          "Registers a new vehicle. A newly created vehicle starts in ACTIVE status with zero mileage.",
+      operationId = "createVehicle")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Vehicle created"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid vehicle data"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Registration number or VIN already exists")
+  })
   public ResponseEntity<ApiResponse<VehicleResponse>> create(
       @Valid @RequestBody CreateVehicleRequest request) {
     Vehicle vehicle =
@@ -81,7 +96,19 @@ public class VehicleController {
    * @return the requested vehicle
    */
   @GetMapping("/{id}")
-  public ResponseEntity<ApiResponse<VehicleResponse>> getById(@PathVariable UUID id) {
+  @Operation(
+      summary = "Get a vehicle by ID",
+      description = "Returns a single vehicle by its UUID.",
+      operationId = "getVehicleById")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Vehicle found"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid vehicle ID"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Vehicle not found")
+  })
+  public ResponseEntity<ApiResponse<VehicleResponse>> getById(
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID id) {
     Vehicle vehicle = vehicleService.get(VehicleId.of(id));
 
     return ResponseEntity.ok(
@@ -96,9 +123,21 @@ public class VehicleController {
    * @return the requested page
    */
   @GetMapping
+  @Operation(
+      summary = "List vehicles",
+      description = "Returns a paginated list of vehicles, newest first.",
+      operationId = "getVehicles")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Vehicles returned"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
+  })
   public ResponseEntity<ApiResponse<PageResponse<VehicleResponse>>> getAll(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
+      @Parameter(description = "Zero-based page index", example = "0")
+          @RequestParam(defaultValue = "0")
+          int page,
+      @Parameter(description = "Page size between 1 and 100", example = "20")
+          @RequestParam(defaultValue = "20")
+          int size) {
     VehiclePage vehicles = vehicleService.findAll(page, size);
 
     var content = vehicles.vehicles().stream().map(VehicleResponse::from).toList();
@@ -117,8 +156,22 @@ public class VehicleController {
    * @return the updated vehicle
    */
   @PutMapping("/{id}")
+  @Operation(
+      summary = "Update a vehicle",
+      description =
+          "Replaces the descriptive data of an existing vehicle. Status and mileage are updated through their dedicated endpoints.",
+      operationId = "updateVehicle")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Vehicle updated"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid vehicle data"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Vehicle not found"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Registration number or VIN already exists")
+  })
   public ResponseEntity<ApiResponse<VehicleResponse>> update(
-      @PathVariable UUID id, @Valid @RequestBody UpdateVehicleRequest request) {
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID id,
+      @Valid @RequestBody UpdateVehicleRequest request) {
     Vehicle vehicle =
         vehicleService.update(
             VehicleId.of(id),
@@ -145,8 +198,22 @@ public class VehicleController {
    * @return the updated vehicle
    */
   @PatchMapping("/{id}/status")
+  @Operation(
+      summary = "Change vehicle status",
+      description =
+          "Transitions a vehicle to the requested lifecycle status. Retired vehicles cannot be reactivated.",
+      operationId = "updateVehicleStatus")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Vehicle status updated"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid status request"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Vehicle not found"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Status transition is not allowed")
+  })
   public ResponseEntity<ApiResponse<VehicleResponse>> updateStatus(
-      @PathVariable UUID id, @Valid @RequestBody UpdateVehicleStatusRequest request) {
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID id,
+      @Valid @RequestBody UpdateVehicleStatusRequest request) {
     Vehicle vehicle = vehicleService.updateStatus(VehicleId.of(id), request.status());
 
     return ResponseEntity.ok(
@@ -161,8 +228,20 @@ public class VehicleController {
    * @return the updated vehicle
    */
   @PatchMapping("/{id}/mileage")
+  @Operation(
+      summary = "Update vehicle mileage",
+      description = "Updates vehicle mileage. Mileage can only increase.",
+      operationId = "updateVehicleMileage")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Mileage updated"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid mileage"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Vehicle not found")
+  })
   public ResponseEntity<ApiResponse<VehicleResponse>> updateMileage(
-      @PathVariable UUID id, @Valid @RequestBody UpdateVehicleMileageRequest request) {
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID id,
+      @Valid @RequestBody UpdateVehicleMileageRequest request) {
     Vehicle vehicle = vehicleService.updateMileage(VehicleId.of(id), request.mileage());
 
     return ResponseEntity.ok(
@@ -176,7 +255,18 @@ public class VehicleController {
    * @return HTTP 204 when the vehicle was deleted
    */
   @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable UUID id) {
+  @Operation(
+      summary = "Delete a vehicle",
+      description = "Deletes a vehicle and its location history.",
+      operationId = "deleteVehicle")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Vehicle deleted"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Vehicle not found")
+  })
+  public ResponseEntity<Void> delete(
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID id) {
     vehicleService.delete(VehicleId.of(id));
 
     return ResponseEntity.noContent().build();

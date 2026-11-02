@@ -1,5 +1,6 @@
 package com.tracking.fleet.shared.api.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.Map;
 
@@ -11,8 +12,20 @@ import java.util.Map;
  * @param errors field-specific validation errors, when available
  * @param timestamp time at which the response was created
  */
+@Schema(name = "ApiErrorResponse", description = "Standard wrapper for failed API responses")
 public record ApiErrorResponse(
-    boolean success, String message, Map<String, String> errors, Instant timestamp) {
+    @Schema(description = "Always false for failed responses", example = "false") boolean success,
+    @Schema(description = "Human-readable error message", example = "Vehicle not found")
+        String message,
+    @Schema(
+            description = "Field-specific validation errors, keyed by field name",
+            example = "{\"registrationNumber\": \"Registration number is required\"}")
+        Map<String, String> errors,
+    @Schema(
+            description = "Time at which the response was created",
+            example = "2026-01-01T10:00:00Z",
+            accessMode = Schema.AccessMode.READ_ONLY)
+        Instant timestamp) {
 
   /**
    * Creates an error response and defensively copies the error map.

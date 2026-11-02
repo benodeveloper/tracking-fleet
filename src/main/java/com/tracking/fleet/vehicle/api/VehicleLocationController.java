@@ -9,6 +9,10 @@ import com.tracking.fleet.vehicle.application.VehicleLocationService;
 import com.tracking.fleet.vehicle.application.command.RecordVehicleLocationCommand;
 import com.tracking.fleet.vehicle.domain.VehicleId;
 import com.tracking.fleet.vehicle.domain.model.VehicleLocation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.time.Instant;
 import java.util.List;
@@ -29,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RequestMapping("/api/v1/vehicles")
 @RestController
+@Tag(name = "Locations", description = "Record and query vehicle GPS positions")
 public class VehicleLocationController {
 
   private final VehicleLocationService vehicleLocationService;
@@ -50,8 +55,24 @@ public class VehicleLocationController {
    * @return the recorded location with HTTP 201
    */
   @PostMapping("/{vehicleId}/locations")
+  @Operation(
+      summary = "Record a vehicle location",
+      description =
+          "Stores a GPS position reported by a vehicle. Recorded time cannot be more than 60 seconds in the future.",
+      operationId = "recordVehicleLocation")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "201", description = "Location recorded"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400", description = "Invalid location data"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "404", description = "Vehicle not found")
+  })
   public ResponseEntity<ApiResponse<VehicleLocationResponse>> record(
-      @PathVariable UUID vehicleId, @Valid @RequestBody RecordVehicleLocationRequest request) {
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID vehicleId,
+      @Valid @RequestBody RecordVehicleLocationRequest request) {
     VehicleLocation location =
         vehicleLocationService.record(
             VehicleId.of(vehicleId),
@@ -76,8 +97,20 @@ public class VehicleLocationController {
    * @return the latest location
    */
   @GetMapping("/{vehicleId}/locations/latest")
+  @Operation(
+      summary = "Get the latest vehicle location",
+      description = "Returns the most recently recorded location for a vehicle.",
+      operationId = "getLatestVehicleLocation")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200", description = "Latest location returned"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "404", description = "Vehicle or location not found")
+  })
   public ResponseEntity<ApiResponse<VehicleLocationResponse>> getLatest(
-      @PathVariable UUID vehicleId) {
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID vehicleId) {
     VehicleLocation location = vehicleLocationService.getLatest(VehicleId.of(vehicleId));
 
     return ResponseEntity.ok(
@@ -96,14 +129,41 @@ public class VehicleLocationController {
    * @return the requested history page
    */
   @GetMapping("/{vehicleId}/locations")
+  @Operation(
+      summary = "Get vehicle location history",
+      description =
+          "Returns a paginated location history for a vehicle, newest first. Both time filters are optional and inclusive.",
+      operationId = "getVehicleLocationHistory")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200", description = "Location history returned"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "400", description = "Invalid pagination or time range"),
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "404", description = "Vehicle not found")
+  })
   public ResponseEntity<ApiResponse<PageResponse<VehicleLocationResponse>>> getHistory(
-      @PathVariable UUID vehicleId,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+      @Parameter(description = "Vehicle UUID", example = "3fa85f64-5717-4562-b3fc-2c963f66afa6")
+          @PathVariable
+          UUID vehicleId,
+      @Parameter(
+              description = "Inclusive lower bound for recorded time (ISO-8601)",
+              example = "2026-01-01T00:00:00Z")
+          @RequestParam(required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           Instant from,
-      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+      @Parameter(
+              description = "Inclusive upper bound for recorded time (ISO-8601)",
+              example = "2026-01-02T00:00:00Z")
+          @RequestParam(required = false)
+          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           Instant to,
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size) {
+      @Parameter(description = "Zero-based page index", example = "0")
+          @RequestParam(defaultValue = "0")
+          int page,
+      @Parameter(description = "Page size between 1 and 100", example = "20")
+          @RequestParam(defaultValue = "20")
+          int size) {
     VehicleLocationPage history =
         vehicleLocationService.findHistory(VehicleId.of(vehicleId), from, to, page, size);
 
@@ -120,6 +180,14 @@ public class VehicleLocationController {
    * @return latest locations, newest first
    */
   @GetMapping("/live")
+  @Operation(
+      summary = "Get live vehicle locations",
+      description = "Returns the most recent position of every vehicle that has reported a location.",
+      operationId = "getLiveVehicleLocations")
+  @ApiResponses({
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        responseCode = "200", description = "Latest locations returned")
+  })
   public ResponseEntity<ApiResponse<List<VehicleLocationResponse>>> getLive() {
     List<VehicleLocationResponse> locations =
         vehicleLocationService.findLive().stream().map(VehicleLocationResponse::from).toList();
