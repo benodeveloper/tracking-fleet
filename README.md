@@ -1,5 +1,7 @@
 # Tracking Fleet: Real-Time Vehicle Tracking API
 
+[![CI](https://github.com/benodeveloper/tracking-fleet/actions/workflows/ci.yml/badge.svg)](https://github.com/benodeveloper/tracking-fleet/actions/workflows/ci.yml)
+
 ## API
 
 ### Vehicles
@@ -99,3 +101,15 @@ cp config/application-local.example.yaml config/application-local.yaml
 ```bash
 SPRING_PROFILES_ACTIVE=local ./gradlew bootRun
 ```
+
+## Continuous integration
+
+GitHub Actions runs the full verification pipeline on pushes to `develop`/`main` and on pull
+requests targeting those branches:
+
+```bash
+./gradlew clean test javadoc bootJar --no-daemon
+```
+
+The workflow is defined in `.github/workflows/ci.yml`. Failed test reports are uploaded as build
+artifacts, and successful builds upload the executable application jar.
