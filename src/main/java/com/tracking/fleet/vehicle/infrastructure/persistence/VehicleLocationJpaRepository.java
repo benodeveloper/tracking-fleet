@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 /**
  * Spring Data repository used by {@link VehicleLocationRepositoryAdapter}.
@@ -25,27 +24,47 @@ interface VehicleLocationJpaRepository extends JpaRepository<VehicleLocationJpaE
       findFirstByVehicleIdOrderByRecordedAtDescReceivedAtDesc(UUID vehicleId);
 
   /**
-   * Returns a page of location history for a vehicle.
+   * Returns a page of all locations for a vehicle.
    *
    * @param vehicleId vehicle identifier
-   * @param from optional inclusive lower bound for the recorded timestamp
-   * @param to optional inclusive upper bound for the recorded timestamp
    * @param pageable pagination and sorting information
    * @return matching locations
    */
-  @Query(
-      """
-      select location
-      from VehicleLocationJpaEntity location
-      where location.vehicleId = :vehicleId
-        and (:from is null or location.recordedAt >= :from)
-        and (:to is null or location.recordedAt <= :to)
-      """)
-  Page<VehicleLocationJpaEntity> findHistory(
-      @Param("vehicleId") UUID vehicleId,
-      @Param("from") Instant from,
-      @Param("to") Instant to,
-      Pageable pageable);
+  Page<VehicleLocationJpaEntity> findByVehicleId(UUID vehicleId, Pageable pageable);
+
+  /**
+   * Returns a page of locations recorded at or after the supplied time.
+   *
+   * @param vehicleId vehicle identifier
+   * @param from inclusive lower bound for the recorded timestamp
+   * @param pageable pagination and sorting information
+   * @return matching locations
+   */
+  Page<VehicleLocationJpaEntity> findByVehicleIdAndRecordedAtGreaterThanEqual(
+      UUID vehicleId, Instant from, Pageable pageable);
+
+  /**
+   * Returns a page of locations recorded at or before the supplied time.
+   *
+   * @param vehicleId vehicle identifier
+   * @param to inclusive upper bound for the recorded timestamp
+   * @param pageable pagination and sorting information
+   * @return matching locations
+   */
+  Page<VehicleLocationJpaEntity> findByVehicleIdAndRecordedAtLessThanEqual(
+      UUID vehicleId, Instant to, Pageable pageable);
+
+  /**
+   * Returns a page of locations recorded within the supplied time range.
+   *
+   * @param vehicleId vehicle identifier
+   * @param from inclusive lower bound for the recorded timestamp
+   * @param to inclusive upper bound for the recorded timestamp
+   * @param pageable pagination and sorting information
+   * @return matching locations
+   */
+  Page<VehicleLocationJpaEntity> findByVehicleIdAndRecordedAtBetween(
+      UUID vehicleId, Instant from, Instant to, Pageable pageable);
 
   /**
    * Returns the latest location for every vehicle that has reported a position.

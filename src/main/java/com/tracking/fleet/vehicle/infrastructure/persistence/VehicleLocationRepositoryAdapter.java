@@ -7,6 +7,8 @@ import com.tracking.fleet.vehicle.domain.model.VehicleLocation;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
@@ -51,10 +53,32 @@ public class VehicleLocationRepositoryAdapter implements VehicleLocationReposito
             Sort.by(Sort.Direction.DESC, "recordedAt")
                 .and(Sort.by(Sort.Direction.DESC, "receivedAt")));
 
-    var result = jpaRepository.findHistory(vehicleId.value(), from, to, pageable);
+    var result = findPage(jpaRepository, vehicleId.value(), from, to, pageable);
     var locations = result.map(VehicleLocationJpaEntity::toDomain).getContent();
 
     return new VehicleLocationHistory(locations, result.getTotalElements());
+  }
+
+  private static Page<VehicleLocationJpaEntity> findPage(
+      VehicleLocationJpaRepository jpaRepository,
+      UUID vehicleId,
+      Instant from,
+      Instant to,
+      PageRequest pageable) {
+    if (from == null && to == null) {
+      return jpaRepository.findByVehicleId(vehicleId, pageable);
+    }
+
+    if (to == null) {
+      return jpaRepository.findByVehicleIdAndRecordedAtGreaterThanEqual(
+          vehicleId, from, pageable);
+    }
+
+    if (from == null) {
+      return jpaRepository.findByVehicleIdAndRecordedAtLessThanEqual(vehicleId, to, pageable);
+    }
+
+    return jpaRepository.findByVehicleIdAndRecordedAtBetween(vehicleId, from, to, pageable);
   }
 
   @Override

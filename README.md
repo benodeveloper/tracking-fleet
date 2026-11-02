@@ -113,3 +113,14 @@ requests targeting those branches:
 
 The workflow is defined in `.github/workflows/ci.yml`. Failed test reports are uploaded as build
 artifacts, and successful builds upload the executable application jar.
+
+## Testing
+
+```bash
+./gradlew clean test javadoc bootJar --no-daemon
+```
+
+The test suite includes a PostgreSQL integration test backed by Testcontainers. It runs the Flyway
+migrations against a real PostgreSQL container, validates the JPA mappings, exercises location
+history/live queries, and verifies the vehicle-to-location cascade delete. Docker must be available
+for this test; the GitHub Actions runner provides it by default.
