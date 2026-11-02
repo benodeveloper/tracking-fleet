@@ -35,3 +35,9 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Local configuration (may contain secrets) ###
+/config/application-local.yaml
+/config/application-*.local.yaml
+.env
+.env.local
