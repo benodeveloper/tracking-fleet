@@ -33,3 +33,8 @@ springdoc:
     tags-sorter: alpha
     display-request-duration: true
     try-it-out-enabled: true
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:local-dev-jwt-secret-change-me-please-32-bytes-min}
+    expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:43200}

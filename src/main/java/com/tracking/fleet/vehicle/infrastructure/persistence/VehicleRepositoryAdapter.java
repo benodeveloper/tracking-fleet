@@ -35,33 +35,31 @@ public class VehicleRepositoryAdapter implements VehicleRepository {
 
   @Override
   public Optional<Vehicle> findById(VehicleId id) {
-    return jpaRepository.findById(id.value()).map(VehicleJpaEntity::toDomain);
+    return jpaRepository.findByIdAndDeletedAtIsNull(id.value()).map(VehicleJpaEntity::toDomain);
   }
 
   @Override
   public List<Vehicle> findAll(int page, int size) {
     var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-    return jpaRepository.findAll(pageable).map(VehicleJpaEntity::toDomain).getContent();
+    return jpaRepository
+        .findAllByDeletedAtIsNull(pageable)
+        .map(VehicleJpaEntity::toDomain)
+        .getContent();
   }
 
   @Override
   public long count() {
-    return jpaRepository.count();
+    return jpaRepository.countByDeletedAtIsNull();
   }
 
   @Override
   public boolean existsByRegistrationNumber(RegistrationNumber registrationNumber) {
-    return jpaRepository.existsByRegistrationNumber(registrationNumber.value());
+    return jpaRepository.existsByRegistrationNumberAndDeletedAtIsNull(registrationNumber.value());
   }
 
   @Override
   public boolean existsByVin(String vin) {
-    return jpaRepository.existsByVin(vin);
-  }
-
-  @Override
-  public void delete(Vehicle vehicle) {
-    jpaRepository.deleteById(vehicle.id().value());
+    return jpaRepository.existsByVinAndDeletedAtIsNull(vin);
   }
 }

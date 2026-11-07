@@ -75,6 +75,9 @@ public class VehicleJpaEntity {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
+  @Column(name = "deleted_at")
+  private Instant deletedAt;
+
   /**
    * Required by JPA.
    */
@@ -94,7 +97,8 @@ public class VehicleJpaEntity {
       String color,
       BigDecimal mileage,
       Instant createdAt,
-      Instant updatedAt) {
+      Instant updatedAt,
+      Instant deletedAt) {
     this.id = id;
     this.registrationNumber = registrationNumber;
     this.vin = vin;
@@ -109,6 +113,7 @@ public class VehicleJpaEntity {
     this.mileage = mileage;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
+    this.deletedAt = deletedAt;
   }
 
   /**
@@ -134,7 +139,8 @@ public class VehicleJpaEntity {
         vehicle.color(),
         vehicle.mileage(),
         vehicle.createdAt(),
-        vehicle.updatedAt());
+        vehicle.updatedAt(),
+        vehicle.deletedAt());
   }
 
   /**
@@ -153,6 +159,7 @@ public class VehicleJpaEntity {
         status,
         mileage,
         createdAt,
-        updatedAt);
+        updatedAt,
+        deletedAt);
   }
 }

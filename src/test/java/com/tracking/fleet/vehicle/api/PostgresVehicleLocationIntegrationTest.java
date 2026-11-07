@@ -9,7 +9,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.jayway.jsonpath.JsonPath;
-import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -54,9 +53,6 @@ class PostgresVehicleLocationIntegrationTest {
 
   @Autowired
   private JdbcTemplate jdbcTemplate;
-
-  @Autowired
-  private EntityManager entityManager;
 
   @Test
   void flywaySchemaSupportsLocationQueries() throws Exception {
@@ -139,7 +135,7 @@ class PostgresVehicleLocationIntegrationTest {
   }
 
   @Test
-  void deletingVehicleCascadesLocationRowsInPostgres() throws Exception {
+  void deletingVehicleSoftDeletesItAndRetainsLocationHistory() throws Exception {
     String vehicleId = createVehicle("PG-1002");
 
     mockMvc
@@ -160,14 +156,40 @@ class PostgresVehicleLocationIntegrationTest {
         .perform(delete("/api/v1/vehicles/{vehicleId}", vehicleId))
         .andExpect(status().isNoContent());
 
-    entityManager.flush();
+    Boolean deleted =
+        jdbcTemplate.queryForObject(
+            "select deleted_at is not null from vehicles where id = ?",
+            Boolean.class,
+            UUID.fromString(vehicleId));
+    assertThat(deleted).isTrue();
+
+    mockMvc
+        .perform(get("/api/v1/vehicles/{vehicleId}", vehicleId))
+        .andExpect(status().isNotFound());
+
+    mockMvc
+        .perform(get("/api/v1/vehicles/{vehicleId}/locations", vehicleId))
+        .andExpect(status().isNotFound());
+
+    mockMvc
+        .perform(get("/api/v1/vehicles"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(0));
+
+    mockMvc
+        .perform(get("/api/v1/vehicles/live"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data", hasSize(0)));
 
     Integer countAfter =
         jdbcTemplate.queryForObject(
             "select count(*) from vehicle_locations where vehicle_id = ?",
             Integer.class,
             UUID.fromString(vehicleId));
-    assertThat(countAfter).isZero();
+    assertThat(countAfter).isEqualTo(1);
+
+    String replacementVehicleId = createVehicle("PG-1002");
+    assertThat(replacementVehicleId).isNotEqualTo(vehicleId);
   }
 
   private String createVehicle(String registrationNumber) throws Exception {

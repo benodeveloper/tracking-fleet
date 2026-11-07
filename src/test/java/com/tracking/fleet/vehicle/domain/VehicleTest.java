@@ -41,6 +41,16 @@ class VehicleTest {
   }
 
   @Test
+  void deleteMarksVehicleAsDeleted() {
+    Vehicle vehicle = Vehicle.register(REGISTRATION_NUMBER, null, SPECIFICATION, null);
+
+    vehicle.delete();
+
+    assertThat(vehicle.isDeleted()).isTrue();
+    assertThat(vehicle.deletedAt()).isNotNull();
+  }
+
+  @Test
   void deactivateFromActive() {
     Vehicle vehicle = Vehicle.register(REGISTRATION_NUMBER, null, SPECIFICATION, null);
     vehicle.deactivate();

@@ -21,15 +21,19 @@ public interface VehicleRepository {
   Vehicle save(Vehicle vehicle);
 
   /**
-   * Finds a vehicle by its identifier.
+   * Finds an active vehicle by its identifier.
+   *
+   * <p>Soft-deleted vehicles are excluded.
    *
    * @param id vehicle identifier
-   * @return the vehicle when found
+   * @return the vehicle when found and not soft-deleted
    */
   Optional<Vehicle> findById(VehicleId id);
 
   /**
-   * Returns one page of vehicles, newest first.
+   * Returns one page of active vehicles, newest first.
+   *
+   * <p>Soft-deleted vehicles are excluded.
    *
    * @param page zero-based page index
    * @param size maximum number of vehicles to return
@@ -38,32 +42,27 @@ public interface VehicleRepository {
   List<Vehicle> findAll(int page, int size);
 
   /**
-   * Counts all stored vehicles.
+   * Counts active vehicles.
    *
-   * @return total number of vehicles
+   * <p>Soft-deleted vehicles are excluded.
+   *
+   * @return total number of active vehicles
    */
   long count();
 
   /**
-   * Checks whether a registration number is already in use.
+   * Checks whether an active vehicle already uses a registration number.
    *
    * @param registrationNumber registration number to check
-   * @return {@code true} when a vehicle already uses the registration number
+   * @return {@code true} when an active vehicle already uses the registration number
    */
   boolean existsByRegistrationNumber(RegistrationNumber registrationNumber);
 
   /**
-   * Checks whether a VIN is already in use.
+   * Checks whether an active vehicle already uses a VIN.
    *
    * @param vin VIN to check
-   * @return {@code true} when a vehicle already uses the VIN
+   * @return {@code true} when an active vehicle already uses the VIN
    */
   boolean existsByVin(String vin);
-
-  /**
-   * Deletes a vehicle.
-   *
-   * @param vehicle vehicle to delete
-   */
-  void delete(Vehicle vehicle);
 }

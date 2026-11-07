@@ -30,6 +30,7 @@ public class Vehicle {
 
   private final Instant createdAt;
   private Instant updatedAt;
+  private Instant deletedAt;
 
   private Vehicle(
       VehicleId id,
@@ -40,7 +41,8 @@ public class Vehicle {
       VehicleStatus status,
       BigDecimal mileage,
       Instant createdAt,
-      Instant updatedAt) {
+      Instant updatedAt,
+      Instant deletedAt) {
     this.id = Objects.requireNonNull(id);
     this.registrationNumber = Objects.requireNonNull(registrationNumber);
     this.vin = validateVin(vin);
@@ -50,6 +52,7 @@ public class Vehicle {
     this.mileage = validateMileage(mileage);
     this.createdAt = Objects.requireNonNull(createdAt);
     this.updatedAt = Objects.requireNonNull(updatedAt);
+    this.deletedAt = deletedAt;
   }
 
   /**
@@ -80,7 +83,8 @@ public class Vehicle {
         VehicleStatus.ACTIVE,
         BigDecimal.ZERO,
         now,
-        now);
+        now,
+        null);
   }
 
   /**
@@ -110,6 +114,48 @@ public class Vehicle {
       BigDecimal mileage,
       Instant createdAt,
       Instant updatedAt) {
+    return restore(
+        id,
+        registrationNumber,
+        vin,
+        specification,
+        color,
+        status,
+        mileage,
+        createdAt,
+        updatedAt,
+        null);
+  }
+
+  /**
+   * Reconstitutes a vehicle from persisted state, including its soft-delete timestamp.
+   *
+   * <p>This factory is intended for persistence adapters. Application code should use {@link
+   * #register(RegistrationNumber, String, VehicleSpecification, String)} instead.
+   *
+   * @param id vehicle identifier
+   * @param registrationNumber registration number
+   * @param vin optional VIN
+   * @param specification vehicle specification
+   * @param color optional color
+   * @param status current lifecycle status
+   * @param mileage current mileage
+   * @param createdAt creation timestamp
+   * @param updatedAt last update timestamp
+   * @param deletedAt soft-delete timestamp, or {@code null} when the vehicle is active
+   * @return restored vehicle
+   */
+  public static Vehicle restore(
+      VehicleId id,
+      RegistrationNumber registrationNumber,
+      String vin,
+      VehicleSpecification specification,
+      String color,
+      VehicleStatus status,
+      BigDecimal mileage,
+      Instant createdAt,
+      Instant updatedAt,
+      Instant deletedAt) {
     return new Vehicle(
         id,
         registrationNumber,
@@ -119,7 +165,8 @@ public class Vehicle {
         status,
         mileage,
         createdAt,
-        updatedAt);
+        updatedAt,
+        deletedAt);
   }
 
   /**
@@ -263,6 +310,21 @@ public class Vehicle {
     this.updatedAt = Instant.now();
   }
 
+  /**
+   * Marks the vehicle as deleted while retaining its persisted identity and history.
+   *
+   * <p>Repeated calls keep the original deletion timestamp unchanged.
+   */
+  public void delete() {
+    if (deletedAt != null) {
+      return;
+    }
+
+    Instant now = Instant.now();
+    this.deletedAt = now;
+    this.updatedAt = now;
+  }
+
   private void changeStatus(VehicleStatus newStatus) {
     if (this.status == newStatus) {
       return;
@@ -385,5 +447,23 @@ public class Vehicle {
    */
   public Instant updatedAt() {
     return updatedAt;
+  }
+
+  /**
+   * Returns whether the vehicle has been soft-deleted.
+   *
+   * @return {@code true} when the vehicle is soft-deleted
+   */
+  public boolean isDeleted() {
+    return deletedAt != null;
+  }
+
+  /**
+   * Returns the soft-delete timestamp, when the vehicle has been deleted.
+   *
+   * @return deletion timestamp or {@code null}
+   */
+  public Instant deletedAt() {
+    return deletedAt;
   }
 }

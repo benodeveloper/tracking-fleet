@@ -1,6 +1,8 @@
 package com.tracking.fleet.vehicle.api;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -8,11 +10,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.jayway.jsonpath.JsonPath;
 import java.time.Instant;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,9 @@ class VehicleLocationIntegrationTest {
 
   @Autowired
   private MockMvc mockMvc;
+
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
   private String createVehicle(String registrationNumber) throws Exception {
     String response =
@@ -113,6 +120,50 @@ class VehicleLocationIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.data", hasSize(1)))
         .andExpect(jsonPath("$.data[0].vehicleId").value(vehicleId));
+  }
+
+  @Test
+  void deletingVehicleRetainsLocationHistoryButExcludesVehicle() throws Exception {
+    String vehicleId = createVehicle("LOC-1004");
+
+    mockMvc
+        .perform(
+            post("/api/v1/vehicles/{vehicleId}/locations", vehicleId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(locationBody(Instant.now().minusSeconds(5), 52.3676, 4.9041)))
+        .andExpect(status().isCreated());
+
+    mockMvc
+        .perform(delete("/api/v1/vehicles/{vehicleId}", vehicleId))
+        .andExpect(status().isNoContent());
+
+    mockMvc
+        .perform(get("/api/v1/vehicles/{vehicleId}", vehicleId))
+        .andExpect(status().isNotFound());
+
+    mockMvc
+        .perform(get("/api/v1/vehicles/{vehicleId}/locations", vehicleId))
+        .andExpect(status().isNotFound());
+
+    mockMvc
+        .perform(get("/api/v1/vehicles"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.totalElements").value(0));
+
+    mockMvc
+        .perform(get("/api/v1/vehicles/live"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data", hasSize(0)));
+
+    Integer storedLocations =
+        jdbcTemplate.queryForObject(
+            "select count(*) from vehicle_locations where vehicle_id = ?",
+            Integer.class,
+            UUID.fromString(vehicleId));
+    assertThat(storedLocations).isEqualTo(1);
+
+    String replacementVehicleId = createVehicle("LOC-1004");
+    assertThat(replacementVehicleId).isNotEqualTo(vehicleId);
   }
 
   @Test

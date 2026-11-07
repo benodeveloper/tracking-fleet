@@ -249,7 +249,7 @@ public class VehicleController {
   }
 
   /**
-   * Deletes a vehicle.
+   * Soft-deletes a vehicle.
    *
    * @param id vehicle identifier
    * @return HTTP 204 when the vehicle was deleted
@@ -257,7 +257,8 @@ public class VehicleController {
   @DeleteMapping("/{id}")
   @Operation(
       summary = "Delete a vehicle",
-      description = "Deletes a vehicle and its location history.",
+      description =
+          "Soft-deletes a vehicle. The vehicle is excluded from reads and live tracking, while its location history is retained.",
       operationId = "deleteVehicle")
   @ApiResponses({
     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Vehicle deleted"),

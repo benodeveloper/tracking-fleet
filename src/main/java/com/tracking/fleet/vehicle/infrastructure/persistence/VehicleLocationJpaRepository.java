@@ -74,8 +74,10 @@ interface VehicleLocationJpaRepository extends JpaRepository<VehicleLocationJpaE
   @Query(
       """
       select location
-      from VehicleLocationJpaEntity location
-      where location.recordedAt = (
+      from VehicleLocationJpaEntity location, VehicleJpaEntity vehicle
+      where location.vehicleId = vehicle.id
+      and vehicle.deletedAt is null
+      and location.recordedAt = (
         select max(latestRecorded.recordedAt)
         from VehicleLocationJpaEntity latestRecorded
         where latestRecorded.vehicleId = location.vehicleId

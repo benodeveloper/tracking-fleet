@@ -14,7 +14,7 @@
 | `PUT` | `/api/v1/vehicles/{id}` | Update a vehicle |
 | `PATCH` | `/api/v1/vehicles/{id}/status` | Change vehicle status |
 | `PATCH` | `/api/v1/vehicles/{id}/mileage` | Update vehicle mileage |
-| `DELETE` | `/api/v1/vehicles/{id}` | Delete a vehicle and its location history |
+| `DELETE` | `/api/v1/vehicles/{id}` | Soft-delete a vehicle while retaining its location history |
 
 ### Locations
 
@@ -24,6 +24,9 @@
 | `GET` | `/api/v1/vehicles/{id}/locations/latest` | Get the latest location |
 | `GET` | `/api/v1/vehicles/{id}/locations` | Get location history (paged, optional `from`/`to`) |
 | `GET` | `/api/v1/vehicles/live` | Get the latest location of every vehicle |
+
+Deleting a vehicle is a soft delete. The vehicle disappears from normal reads and live tracking, and
+its registration number and VIN become available again, but its location rows remain stored.
 
 ## Swagger UI / OpenAPI
 
@@ -122,5 +125,5 @@ artifacts, and successful builds upload the executable application jar.
 
 The test suite includes a PostgreSQL integration test backed by Testcontainers. It runs the Flyway
 migrations against a real PostgreSQL container, validates the JPA mappings, exercises location
-history/live queries, and verifies the vehicle-to-location cascade delete. Docker must be available
-for this test; the GitHub Actions runner provides it by default.
+history/live queries, and verifies that soft-deleted vehicles retain their location history. Docker
+must be available for this test; the GitHub Actions runner provides it by default.

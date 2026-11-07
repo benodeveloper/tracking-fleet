@@ -178,14 +178,15 @@ public class VehicleService {
   }
 
   /**
-   * Deletes a vehicle.
+   * Soft-deletes a vehicle while retaining its persisted identity and location history.
    *
    * @param id vehicle identifier
-   * @throws VehicleNotFoundException if the vehicle does not exist
+   * @throws VehicleNotFoundException if the vehicle does not exist or is already deleted
    */
   public void delete(VehicleId id) {
     Vehicle vehicle = get(id);
-    vehicleRepository.delete(vehicle);
+    vehicle.delete();
+    save(vehicle);
   }
 
   private Vehicle save(Vehicle vehicle) {

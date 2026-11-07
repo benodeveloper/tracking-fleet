@@ -213,7 +213,7 @@ class VehicleServiceTest {
   }
 
   @Test
-  void deleteRemovesVehicle() {
+  void deleteMarksVehicleAsDeleted() {
     UUID id = UUID.randomUUID();
     Vehicle vehicle =
         Vehicle.restore(
@@ -228,9 +228,13 @@ class VehicleServiceTest {
             Instant.now());
 
     when(vehicleRepository.findById(VehicleId.of(id))).thenReturn(Optional.of(vehicle));
+    when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
     vehicleService.delete(VehicleId.of(id));
 
-    verify(vehicleRepository).delete(vehicle);
+    ArgumentCaptor<Vehicle> captor = ArgumentCaptor.forClass(Vehicle.class);
+    verify(vehicleRepository).save(captor.capture());
+    assertThat(captor.getValue().isDeleted()).isTrue();
+    assertThat(captor.getValue().deletedAt()).isNotNull();
   }
 }

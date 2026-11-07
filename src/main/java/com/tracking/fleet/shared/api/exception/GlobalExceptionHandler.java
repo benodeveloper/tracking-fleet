@@ -93,6 +93,22 @@ public class GlobalExceptionHandler {
   }
 
   /**
+   * Handles authentication failures.
+   */
+  @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+  public ResponseEntity<ApiErrorResponse> handleBadCredentials(
+      org.springframework.security.authentication.BadCredentialsException exception) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+        .body(ApiErrorResponse.of(exception.getMessage()));
+  }
+
+  @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+  public ResponseEntity<ApiErrorResponse> handleAccessDenied(
+      org.springframework.security.access.AccessDeniedException exception) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiErrorResponse.of("Access denied"));
+  }
+
+  /**
    * Handles invalid arguments, path variables and unreadable request bodies.
    *
    * @param exception invalid request exception
