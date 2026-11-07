@@ -1,0 +1,40 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: fleet
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/tracking_db}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:local-dev-jwt-secret-change-me-please-32-bytes-min}
+    expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:43200}
