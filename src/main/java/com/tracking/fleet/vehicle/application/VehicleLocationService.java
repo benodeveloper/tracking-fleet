@@ -7,6 +7,7 @@ import com.tracking.fleet.vehicle.domain.VehicleId;
 import com.tracking.fleet.vehicle.domain.VehicleLocationRepository;
 import com.tracking.fleet.vehicle.domain.VehicleRepository;
 import com.tracking.fleet.vehicle.domain.model.VehicleLocation;
+import com.tracking.fleet.vehicle.infrastructure.websocket.VehicleLocationBroadcaster;
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
@@ -22,6 +23,7 @@ public class VehicleLocationService {
 
   private final VehicleRepository vehicleRepository;
   private final VehicleLocationRepository vehicleLocationRepository;
+  private final VehicleLocationBroadcaster broadcaster;
 
   /**
    * Creates the vehicle location service.
@@ -30,9 +32,12 @@ public class VehicleLocationService {
    * @param vehicleLocationRepository location repository port
    */
   public VehicleLocationService(
-      VehicleRepository vehicleRepository, VehicleLocationRepository vehicleLocationRepository) {
+      VehicleRepository vehicleRepository,
+      VehicleLocationRepository vehicleLocationRepository,
+      VehicleLocationBroadcaster broadcaster) {
     this.vehicleRepository = Objects.requireNonNull(vehicleRepository);
     this.vehicleLocationRepository = Objects.requireNonNull(vehicleLocationRepository);
+    this.broadcaster = broadcaster;
   }
 
   /**
@@ -58,7 +63,9 @@ public class VehicleLocationService {
             command.accuracyMeters(),
             command.recordedAt());
 
-    return vehicleLocationRepository.save(location);
+    VehicleLocation saved = vehicleLocationRepository.save(location);
+    if (broadcaster != null) broadcaster.broadcast(saved);
+    return saved;
   }
 
   /**

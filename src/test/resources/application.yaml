@@ -11,3 +11,8 @@ spring:
 
   flyway:
     enabled: false
+
+app:
+  jwt:
+    secret: test-jwt-secret-change-me-please-32-bytes-min
+    expiration-seconds: 3600

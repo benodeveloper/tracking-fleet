@@ -21,6 +21,7 @@ import com.tracking.fleet.vehicle.domain.model.RegistrationNumber;
 import com.tracking.fleet.vehicle.domain.model.Vehicle;
 import com.tracking.fleet.vehicle.domain.model.VehicleLocation;
 import com.tracking.fleet.vehicle.domain.model.VehicleSpecification;
+import com.tracking.fleet.vehicle.infrastructure.websocket.VehicleLocationBroadcaster;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -40,6 +41,9 @@ class VehicleLocationServiceTest {
   @Mock
   private VehicleLocationRepository vehicleLocationRepository;
 
+  @Mock
+  private VehicleLocationBroadcaster broadcaster;
+
   private VehicleLocationService vehicleLocationService;
 
   private VehicleId vehicleId;
@@ -48,7 +52,7 @@ class VehicleLocationServiceTest {
   @BeforeEach
   void setUp() {
     vehicleLocationService =
-        new VehicleLocationService(vehicleRepository, vehicleLocationRepository);
+        new VehicleLocationService(vehicleRepository, vehicleLocationRepository, broadcaster);
 
     vehicleId = VehicleId.generate();
     vehicle =

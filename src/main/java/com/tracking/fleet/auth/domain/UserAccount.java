@@ -9,5 +9,6 @@ public record UserAccount(
     String passwordHash,
     String displayName,
     String role,
+    UUID assignedVehicleId,
     Instant createdAt,
     Instant updatedAt) {}

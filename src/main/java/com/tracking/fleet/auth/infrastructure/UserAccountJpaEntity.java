@@ -28,6 +28,9 @@ public class UserAccountJpaEntity {
   @Column(name = "role", nullable = false, length = 30)
   private String role;
 
+  @Column(name = "assigned_vehicle_id")
+  private UUID assignedVehicleId;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
@@ -43,12 +46,13 @@ public class UserAccountJpaEntity {
     e.passwordHash = user.passwordHash();
     e.displayName = user.displayName();
     e.role = user.role();
+    e.assignedVehicleId = user.assignedVehicleId();
     e.createdAt = user.createdAt();
     e.updatedAt = user.updatedAt();
     return e;
   }
 
   public UserAccount toDomain() {
-    return new UserAccount(id, username, passwordHash, displayName, role, createdAt, updatedAt);
+    return new UserAccount(id, username, passwordHash, displayName, role, assignedVehicleId, createdAt, updatedAt);
   }
 }

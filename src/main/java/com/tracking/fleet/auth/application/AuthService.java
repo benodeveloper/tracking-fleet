@@ -31,13 +31,15 @@ public class AuthService {
 
     String token = jwtService.issueToken(user.username(), user.role());
     return new AuthResponse(
-        token, "Bearer", jwtService.expirationSeconds(), user.username(), user.displayName(), user.role());
+        token, "Bearer", jwtService.expirationSeconds(), user.username(), user.displayName(), user.role(),
+        user.assignedVehicleId());
   }
 
   public AuthResponse profile(String username) {
     UserAccount user = userRepository.findByUsername(username)
         .orElseThrow(() -> new BadCredentialsException("Invalid token subject"));
     return new AuthResponse(
-        null, "Bearer", jwtService.expirationSeconds(), user.username(), user.displayName(), user.role());
+        null, "Bearer", jwtService.expirationSeconds(), user.username(), user.displayName(), user.role(),
+        user.assignedVehicleId());
   }
 }
